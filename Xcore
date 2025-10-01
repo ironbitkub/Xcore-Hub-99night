@@ -1,0 +1,200 @@
+local Players = game:GetService("Players")
+local Player = Players.LocalPlayer
+local UIS = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+local Workspace = game:GetService("Workspace")
+
+local ScreenGui = Instance.new("ScreenGui", Player:WaitForChild("PlayerGui"))
+
+local MainFrame = Instance.new("Frame", ScreenGui)
+MainFrame.Size = UDim2.new(0,420,0,300)
+MainFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
+MainFrame.AnchorPoint = Vector2.new(0.5,0.5)
+MainFrame.BackgroundColor3 = Color3.fromRGB(255,255,255)
+Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0,12)
+
+local DragHandle = Instance.new("Frame", MainFrame)
+DragHandle.Size = UDim2.new(1,0,0,30)
+DragHandle.Position = UDim2.new(0,0,0,0)
+DragHandle.BackgroundTransparency = 1
+DragHandle.Active = true
+
+local Title = Instance.new("TextLabel", DragHandle)
+Title.Size = UDim2.new(1,-20,1,0)
+Title.Position = UDim2.new(0,10,0,0)
+Title.BackgroundTransparency = 1
+Title.Text = "Xcore Hub - Survive a Shark"
+Title.Font = Enum.Font.GothamBold
+Title.TextSize = 20
+Title.TextColor3 = Color3.fromRGB(0,0,0)
+Title.TextXAlignment = Enum.TextXAlignment.Left
+
+local CloseBtn = Instance.new("TextButton", ScreenGui)
+CloseBtn.Size = UDim2.new(0,40,0,40)
+CloseBtn.Position = UDim2.new(0,10,0,10)
+CloseBtn.Text = "😺"
+CloseBtn.Font = Enum.Font.GothamBold
+CloseBtn.TextSize = 20
+CloseBtn.BackgroundColor3 = Color3.fromRGB(200,200,200)
+Instance.new("UICorner", CloseBtn).CornerRadius = UDim.new(1,0)
+CloseBtn.MouseButton1Click:Connect(function()
+	MainFrame.Visible = not MainFrame.Visible
+end)
+
+local Tabs = Instance.new("Frame", MainFrame)
+Tabs.Size = UDim2.new(0,100,1,-40)
+Tabs.Position = UDim2.new(0,0,0,40)
+Tabs.BackgroundTransparency = 1
+
+local Pages = Instance.new("Frame", MainFrame)
+Pages.Size = UDim2.new(1,-110,1,-50)
+Pages.Position = UDim2.new(0,110,0,40)
+Pages.BackgroundTransparency = 1
+
+local pages = {}
+local function createPage(name)
+	local Page = Instance.new("Frame", Pages)
+	Page.Size = UDim2.new(1,0,1,0)
+	Page.BackgroundTransparency = 1
+	Page.Visible = false
+	pages[name] = Page
+	return Page
+end
+
+local function switchPage(name)
+	for n,p in pairs(pages) do
+		p.Visible = (n == name)
+	end
+end
+
+local function createTab(name, order)
+	local btn = Instance.new("TextButton", Tabs)
+	btn.Size = UDim2.new(1,-10,0,30)
+	btn.Position = UDim2.new(0,5,0,(order-1)*35)
+	btn.BackgroundColor3 = Color3.fromRGB(240,240,240)
+	btn.Text = name
+	btn.Font = Enum.Font.Gotham
+	btn.TextSize = 16
+	btn.TextColor3 = Color3.fromRGB(0,0,0)
+	Instance.new("UICorner", btn).CornerRadius = UDim.new(0,8)
+	btn.MouseButton1Click:Connect(function()
+		switchPage(name)
+	end)
+end
+
+local function createToggle(parent,text,callback,posY)
+	local Row = Instance.new("Frame", parent)
+	Row.Size = UDim2.new(1,0,0,30)
+	Row.BackgroundTransparency = 1
+	Row.Position = UDim2.new(0,0,0,posY)
+	local Label = Instance.new("TextLabel", Row)
+	Label.Size = UDim2.new(1,-40,1,0)
+	Label.Position = UDim2.new(0,10,0,0)
+	Label.BackgroundTransparency = 1
+	Label.Text = text
+	Label.Font = Enum.Font.Gotham
+	Label.TextSize = 16
+	Label.TextColor3 = Color3.fromRGB(0,0,0)
+	Label.TextXAlignment = Enum.TextXAlignment.Left
+	local Toggle = Instance.new("TextButton", Row)
+	Toggle.Size = UDim2.new(0,24,0,24)
+	Toggle.Position = UDim2.new(1,-34,0,3)
+	Toggle.BackgroundColor3 = Color3.fromRGB(230,230,230)
+	Toggle.Text = ""
+	Toggle.Font = Enum.Font.GothamBold
+	Toggle.TextSize = 18
+	Toggle.TextColor3 = Color3.fromRGB(0,0,0)
+	Instance.new("UICorner", Toggle).CornerRadius = UDim.new(0,6)
+	local state = false
+	Toggle.MouseButton1Click:Connect(function()
+		state = not state
+		Toggle.Text = state and "✓" or ""
+		callback(state)
+	end)
+end
+
+createTab("Main",1)
+createTab("Player",2)
+
+local MainPage = createPage("Main")
+local killAuraActive = false
+local killTargets = {"Rabbit","Wolf","Alpha Wolf"}
+createToggle(MainPage,"Kill Aura",function(state)
+	killAuraActive = state
+end,2)
+createToggle(MainPage,"Bring Mob",function(state) end,35)
+
+local PlayerPage = createPage("Player")
+createToggle(PlayerPage,"WalkSpeed",function(state)
+	local h = Player.Character and Player.Character:FindFirstChild("Humanoid")
+	if h then h.WalkSpeed = state and 100 or 16 end
+end,2)
+createToggle(PlayerPage,"JumpPower",function(state)
+	local h = Player.Character and Player.Character:FindFirstChild("Humanoid")
+	if h then h.UseJumpPower = true h.JumpPower = state and 100 or 50 end
+end,35)
+createToggle(PlayerPage,"Infinite Jump",function(state)
+	local conn
+	if state then
+		conn = UIS.JumpRequest:Connect(function()
+			if Player.Character and Player.Character:FindFirstChild("Humanoid") then
+				Player.Character.Humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+			end
+		end)
+	else
+		if conn then conn:Disconnect() end
+	end
+end,68)
+
+switchPage("Main")
+
+RunService.RenderStepped:Connect(function()
+	if killAuraActive and Player.Character then
+		local root = Player.Character:FindFirstChild("HumanoidRootPart")
+		if root then
+			for _,v in pairs(Workspace:GetDescendants()) do
+				if v:IsA("Model") and v:FindFirstChild("Humanoid") and table.find(killTargets,v.Name) and v ~= Player.Character then
+					local vRoot = v:FindFirstChild("HumanoidRootPart")
+					if vRoot and (vRoot.Position - root.Position).Magnitude <= 20 then
+						v.Humanoid:TakeDamage(30)
+					end
+				end
+			end
+		end
+	end
+end)
+
+local dragging = false
+local dragStart
+local startPos
+
+DragHandle.InputBegan:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseButton1 then
+		dragging = true
+		dragStart = input.Position
+		startPos = MainFrame.Position
+		input.Changed:Connect(function()
+			if input.UserInputState == Enum.UserInputState.End then
+				dragging = false
+			end
+		end)
+	end
+end)
+
+DragHandle.InputChanged:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseMovement then
+		input.Changed:Connect(function() end)
+	end
+end)
+
+UIS.InputChanged:Connect(function(input)
+	if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+		local delta = input.Position - dragStart
+		MainFrame.Position = UDim2.new(
+			startPos.X.Scale,
+			startPos.X.Offset + delta.X,
+			startPos.Y.Scale,
+			startPos.Y.Offset + delta.Y
+		)
+	end
+end)
